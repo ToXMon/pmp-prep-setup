@@ -10,7 +10,10 @@ try {
   if (saved && typeof saved === 'object' && !Array.isArray(saved)) history = saved;
 } catch { persistent = false; }
 
-for (const [value, label] of tracks) $('track').add(new Option(label, value));
+for (const [value, label] of tracks) {
+  const count = drills.filter(d => d.track === value).length;
+  $('track').add(new Option(`${label} · ${count} questions`, value));
+}
 function save() {
   try { localStorage.setItem(key, JSON.stringify(history)); } catch { persistent = false; }
 }
@@ -56,13 +59,16 @@ $('practice-form').onsubmit = event => {
   $('rubric').textContent = `Best answer: ${current.options[current.correct]} ${current.rationale}`;
   $('citation').replaceChildren(sourceLink(byTopic[current.concept]));
   $('feedback').hidden = false;
-  history[`${current.track}:${current.concept}`] = {last:current.id, due:Date.now() + day * (correct ? 3 : 1)};
+  const group = `${current.track}:${current.concept}`;
+  const previous = history[group];
+  const attempted = Array.isArray(previous?.attempted) ? previous.attempted : [previous?.last].filter(Boolean);
+  history[group] = {last:current.id, attempted:[...new Set([...attempted,current.id])], due:Date.now() + day * (correct ? 3 : 1)};
   save();
   $('verdict').focus();
 };
 $('next').onclick = () => show(true);
 $('restart').onclick = () => {
-  for (const key of Object.keys(history)) if (key.startsWith(`${$('track').value}:`)) history[key].due = 0;
+  for (const key of Object.keys(history)) if (key.startsWith(`${$('track').value}:`)) delete history[key];
   save();
   show(true);
 };

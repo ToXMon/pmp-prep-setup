@@ -12,13 +12,26 @@ export function search(topics, query) {
   }).filter(hit => hit.score).sort((a,b) => b.score - a.score).map(hit => hit.topic);
 }
 export function nextDrill(drills, history, track, now = Date.now()) {
-  const seen = new Set();
+  const groups = new Map();
   for (const drill of drills) {
-    if (drill.track !== track || seen.has(drill.concept)) continue;
-    seen.add(drill.concept);
-    const previous = history[`${track}:${drill.concept}`];
-    if (previous?.due > now) continue;
-    return drills.find(d => d.track === track && d.concept === drill.concept && d.id !== previous?.last) ?? drill;
+    if (drill.track !== track) continue;
+    if (!groups.has(drill.concept)) groups.set(drill.concept, []);
+    groups.get(drill.concept).push(drill);
+  }
+  const completed = previous => new Set(Array.isArray(previous?.attempted) ? previous.attempted : [previous?.last]);
+  for (const group of groups.values()) {
+    const previous = history[`${track}:${group[0].concept}`];
+    if (!previous) return group[0];
+  }
+  for (const group of groups.values()) {
+    const previous = history[`${track}:${group[0].concept}`];
+    const seen = completed(previous);
+    const firstUnseen = group.find(d => !seen.has(d.id));
+    if (firstUnseen) return firstUnseen;
+  }
+  for (const group of groups.values()) {
+    const previous = history[`${track}:${group[0].concept}`];
+    if (!(previous?.due > now)) return group[(group.findIndex(d => d.id === previous?.last) + 1) % group.length];
   }
   return null;
 }

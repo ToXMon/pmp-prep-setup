@@ -1,4 +1,14 @@
 import {byTopic} from './course.mjs';
+import {foundations} from './questions-foundations.mjs';
+import {delivery} from './questions-delivery.mjs';
+const expanded = Object.entries({...foundations,...delivery}).flatMap(([concept, rows]) => rows.map((row, i) => {
+  const [prompt, best, ...rest] = row.split('|');
+  const rationale = rest.pop();
+  if (rest.length !== 3 || !rationale) throw new Error(`Malformed question: ${concept}/${i}`);
+  const correct = ([...concept].reduce((n,c)=>n+c.charCodeAt(0),0)+i*3)%4;
+  rest.splice(correct,0,best);
+  return {id:`${concept}-exp-${i+1}`,concept,track:byTopic[concept].track,prompt,correct,rationale,options:rest};
+}));
 export const drills = [
  ['gates','A predictive project is at a phase boundary. Deliverables are complete, but a key regulatory assumption has changed. What should the project manager do next?',1,'Review the change and its implications with the gate decision-makers before committing to the next phase.','Start the next phase because deliverables are complete.','Review the assumption and risks at the phase gate.','Close the project because baseline assumptions changed.','Defer the change until the next scheduled status report.'],
  ['comms','A department head receives every status report but still opposes a rollout that will change her team’s work. What should the project manager do first?',2,'The issue is involvement and concern, not simply report frequency. Reassess the engagement approach before changing communications.','Send the same report twice as often.','Remove the department head from routine reporting.','Meet with her to understand concerns and revise the engagement approach.','Ask the sponsor to approve the current communications plan again.'],
@@ -20,4 +30,4 @@ export const drills = [
  ['honesty','A sponsor wants to circulate a report saying the pilot met its goal. The result excludes the lowest-performing site, and the report does not say so. What should the project manager do?',2,'Explain the scope and material exclusion so readers are not misled by an otherwise technically accurate statement.','Send the report because the calculations are correct.','Send it now and explain the exclusion only if someone asks.','Correct the report to disclose the exclusion and its effect on interpretation.','Remove the result and claim there were no meaningful differences between sites.'],
 ].map(([concept,prompt,correct,rationale,...options],i)=>({
  id:`${concept}-${i+1}`,concept,track:byTopic[concept].track,prompt,correct,rationale,options,
-}));
+})).concat(expanded);

@@ -1,6 +1,8 @@
 const revision = '27d4ff809f152833629de9b0c842ff3c751ad8a5';
 const base = `https://raw.githubusercontent.com/tolu-jnj/PMP/${revision}/`;
 export const tracks = [['s4','Session 4'],['s1','Session 1'],['s2','Session 2'],['s3','Session 3'],['s5','Session 5'],['ethics','Ethics']];
+import {priorities} from './coverage.mjs';
+const existing = new Set('gates comms charter norms lead conflict forecast risk evm quality retro qualityplan procurement environment closure responsibility respect disclosure honesty'.split(' '));
 export const topics = [
  ['gates','s1',67,'Phase gates','Predictive governance, phase boundaries, deliverable review, risks and decisions about continuing. Printed slide 68.'],
  ['comms','s1',96,'Stakeholder and communications plans','Decide how to involve stakeholders, then plan what to communicate, to whom and when. Printed slide 97.'],
@@ -21,8 +23,10 @@ export const topics = [
  ['respect','ethics',11,'Respect: mandatory standards','Good-faith negotiation, appropriate use of expertise, and respect for property. Code §3.3.'],
  ['disclosure','ethics',13,'Fairness: conflict disclosure','Disclose actual or potential conflicts of interest. Code §4.3.1.'],
  ['honesty','ethics',15,'Honesty: misleading communications','Do not mislead through false statements, omissions or half-truths. Code §5.3.1.'],
-].map(([id,track,page,title,summary]) => {
+].concat(priorities.filter(row => !existing.has(row[0])).map(([id,track,page,title,,summary])=>[id,track,page,title,summary])).map(([id,track,page,title,summary]) => {
  const name = track === 'ethics' ? 'PMI Code of Ethics.pdf' : `PMP 5-Day Session ${track.slice(1)} Slide Deck Sep 2026.pdf`;
+ if (id === 'scrum') return {id,track,title,summary,source:'The Scrum Guide',url:'https://scrumguides.org/scrum-guide.html'};
+ if (id === 'acronyms') return {id,track,title,summary,source:'Course source collection',url:`https://github.com/tolu-jnj/PMP/tree/${revision}`};
  return {id,track,page,title,summary,source:`${name.replace('.pdf','')}, PDF p. ${page}`,url:`${base}${encodeURIComponent(name)}#page=${page}`};
 });
 export const byTopic = Object.fromEntries(topics.map(t=>[t.id,t]));

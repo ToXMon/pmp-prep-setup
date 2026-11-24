@@ -4,7 +4,7 @@ A mobile-first study coach covering all five PMP bootcamp sessions and a separat
 
 ## Start studying
 
-Open the [study app](https://toxmon.github.io/pmp-prep-setup/). Choose a session, select one best answer, then check the rationale and open its source. Missed concepts return after a day and correct ones after three days. You can restart a track to practice it again. Progress stays in the current browser. The previous free-text activity is not migrated.
+Open the [study app](https://toxmon.github.io/pmp-prep-setup/). Choose a session, select one best answer, then check the rationale and open its source. The bank has 140 original questions over 64 topics, with at least two questions per topic. Work through all unseen scenarios in a track without waiting. After the first pass, missed concepts are due after one day and correct ones after three days. Restarting a track clears that track’s review history. Progress stays in the current browser. The previous free-text activity is not migrated.
 
 Search the built-in topic index without uploading documents. Results link to the pinned course PDFs and Code. The index contains original summaries and source locators, not full-text search of the decks, transcripts, or RAG chunks.
 
