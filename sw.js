@@ -1,5 +1,5 @@
-const cacheName = `pmp-prep-shell-v1:${self.registration.scope}`;
-const files = ['./','./index.html','./style.css','./app.mjs','./drills.mjs','./study.mjs','./manifest.webmanifest','./icon.svg'];
+const cacheName = `pmp-prep-shell-v2:${self.registration.scope}`;
+const files = ['./','./index.html','./style.css','./app.mjs','./drills.mjs','./course.mjs','./study.mjs','./manifest.webmanifest','./icon.svg'];
 const shell = new Set(files.map(file => new URL(file,self.registration.scope).href));
 self.addEventListener('install', event => event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files))));
 self.addEventListener('activate', event => event.waitUntil((async () => {

@@ -1,21 +1,15 @@
 export const day = 86_400_000;
 const tokens = s => s.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
-export function search(documents, query) {
-  const words = [...new Set(tokens(query))];
-  if (!words.length) return [];
-  const hits = [];
-  for (const {name,text} of documents) {
-    let heading = '';
-    for (const [i, raw] of text.split(/\r?\n/).entries()) {
-      if (/^#{1,6} /.test(raw)) heading = raw.replace(/^#+ /,'');
-      const line = raw.trim();
-      if (!line || line.startsWith('#')) continue;
-      const set = new Set(tokens(line));
-      const score = words.reduce((n,w) => n + +set.has(w),0);
-      if (score) hits.push({name,line:i+1,text:`${heading ? `${heading}: ` : ''}${line.slice(0,500)}`,score});
-    }
-  }
-  return hits.sort((a,b) => b.score-a.score).slice(0,10);
+const stop = new Set(['a','an','and','the','of','for','to','how','what','which','is','in','do','with']);
+export function search(topics, query) {
+  const words = [...new Set(tokens(query).filter(w => !stop.has(w)))];
+  if (!words.length) return query.trim() ? [] : topics;
+  return topics.map(topic => {
+    const title = new Set(tokens(topic.title));
+    const context = new Set(tokens(`${topic.summary} ${topic.source}`));
+    const score = words.reduce((n, w) => n + (title.has(w) ? 4 : Number(context.has(w))), 0);
+    return {topic,score};
+  }).filter(hit => hit.score).sort((a,b) => b.score - a.score).map(hit => hit.topic);
 }
 export function nextDrill(drills, history, track, now = Date.now()) {
   const seen = new Set();

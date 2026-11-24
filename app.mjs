@@ -1,61 +1,83 @@
 import {drills} from './drills.mjs';
+import {tracks, topics, byTopic} from './course.mjs';
 import {search, nextDrill, day} from './study.mjs';
+
 const $ = id => document.getElementById(id);
-const key = 'pmp-prep-setup:v1';
-let history = {}, current, documents = [], importVersion = 0, persistent = true;
-try { history = JSON.parse(localStorage.getItem(key) || '{}') || {}; if (Array.isArray(history) || typeof history !== 'object') history = {}; } catch { persistent = false; }
+const key = 'pmp-prep-setup:mcq-v1';
+let history = {}, current, answered = false, persistent = true;
+try {
+  const saved = JSON.parse(localStorage.getItem(key) || '{}');
+  if (saved && typeof saved === 'object' && !Array.isArray(saved)) history = saved;
+} catch { persistent = false; }
+
+for (const [value, label] of tracks) $('track').add(new Option(label, value));
+function save() {
+  try { localStorage.setItem(key, JSON.stringify(history)); } catch { persistent = false; }
+}
+function sourceLink(topic) {
+  const link = document.createElement('a');
+  link.href = topic.url;
+  link.textContent = topic.source;
+  return link;
+}
 function show(focus = false) {
   current = nextDrill(drills, history, $('track').value);
-  $('prompt').textContent = current?.prompt ?? 'You’re caught up for now.';
-  $('progress').textContent = `${current ? 'Answer before checking the rubric.' : 'Switch tracks or come back when a review is due.'}${persistent ? '' : ' Progress is only saved for this visit.'}`;
-  $('answer').value = '';
-  $('answer').disabled = !current;
-  $('reveal').disabled = !current;
+  answered = false;
+  $('practice-form').hidden = !current;
   $('feedback').hidden = true;
-  if (focus) $('prompt').focus();
+  $('restart').hidden = !!current;
+  $('submit').disabled = true;
+  $('progress').textContent = `${current ? 'Choose the single best answer.' : 'You’re caught up. Switch tracks, practice this track again, or return when review is due.'}${persistent ? '' : ' Progress may only last for this visit.'}`;
+  $('prompt').textContent = current?.prompt ?? '';
+  $('choices').replaceChildren();
+  current?.options.forEach((text, index) => {
+    const label = document.createElement('label');
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = 'choice';
+    radio.value = index;
+    label.className = 'choice';
+    label.append(radio, document.createTextNode(text));
+    $('choices').append(label);
+  });
+  if (focus) (current ? $('prompt') : $('restart')).focus();
 }
 $('track').onchange = () => show();
-$('reveal').onclick = () => {
-  if (!current) return;
-  if (!$('answer').value.trim()) { $('answer').focus(); return; }
-  $('rubric').textContent = current.rubric;
-  $('citation').textContent = current.citation;
+$('choices').onchange = () => { if (!answered) $('submit').disabled = false; };
+$('practice-form').onsubmit = event => {
+  event.preventDefault();
+  const selected = $('choices').querySelector('input:checked');
+  if (!current || !selected || answered) return;
+  answered = true;
+  $('submit').disabled = true;
+  $('choices').querySelectorAll('input').forEach(input => { input.disabled = true; });
+  const correct = Number(selected.value) === current.correct;
+  $('verdict').textContent = correct ? 'Correct' : 'Not quite';
+  $('rubric').textContent = `Best answer: ${current.options[current.correct]} ${current.rationale}`;
+  $('citation').replaceChildren(sourceLink(byTopic[current.concept]));
   $('feedback').hidden = false;
-  $('rubric-heading').focus();
+  history[`${current.track}:${current.concept}`] = {last:current.id, due:Date.now() + day * (correct ? 3 : 1)};
+  save();
+  $('verdict').focus();
 };
-for (const button of document.querySelectorAll('[data-score]')) button.onclick = () => {
-  if (!current || $('feedback').hidden) return;
-  const keyForConcept = `${current.track}:${current.concept}`;
-  const result = button.dataset.score;
-  history[keyForConcept] = {last:current.id, due:Date.now() + day * (result === 'got' ? 3 : 1)};
-  try { localStorage.setItem(key, JSON.stringify(history)); } catch { persistent = false; }
+$('next').onclick = () => show(true);
+$('restart').onclick = () => {
+  for (const key of Object.keys(history)) if (key.startsWith(`${$('track').value}:`)) history[key].due = 0;
+  save();
   show(true);
 };
 function displayResults() {
-  const list = $('results');
-  list.replaceChildren();
-  const term = $('query').value.trim();
-  const hits = term ? search(documents, term) : [];
-  $('search-status').textContent = `${documents.length} files loaded.${term ? ` ${hits.length} results shown.` : ''}`;
-  for (const hit of hits) {
-    const li = document.createElement('li'), label = document.createElement('strong'), snippet = document.createElement('div');
-    label.textContent = `${hit.name} · line ${hit.line}`;
-    snippet.textContent = hit.text;
-    li.append(label,snippet);
-    list.append(li);
+  const hits = search(topics, $('query').value);
+  $('results').replaceChildren();
+  $('search-status').textContent = `${hits.length} ${hits.length === 1 ? 'topic' : 'topics'} shown.`;
+  for (const topic of hits) {
+    const li = document.createElement('li'), title = document.createElement('strong'), summary = document.createElement('div');
+    title.textContent = topic.title;
+    summary.textContent = topic.summary;
+    li.append(title, summary, sourceLink(topic));
+    $('results').append(li);
   }
 }
-$('files').onchange = async () => {
-  const version = ++importVersion;
-  const files = [...$('files').files];
-  documents = [];
-  const allowed = files.filter(f => /\.md$/i.test(f.name) && f.size <= 2_000_000).slice(0, 30);
-  const read = await Promise.allSettled(allowed.map(async f => ({name:f.name,text:await f.text()})));
-  if (version !== importVersion) return;
-  documents = read.filter(x => x.status === 'fulfilled').map(x => x.value);
-  displayResults();
-  if (files.length > documents.length) $('search-status').textContent += ` ${files.length - documents.length} skipped (file type, size, count, or read error).`;
-};
 $('query').oninput = displayResults;
 show();
 displayResults();
