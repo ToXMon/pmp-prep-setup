@@ -1,0 +1,10 @@
+corpus/
+private/
+study-data/
+.env*
+*.pdf
+*.pptx
+*transcript.md
+*RAG chunks.md
+*Exam callouts.md
+.DS_Store
