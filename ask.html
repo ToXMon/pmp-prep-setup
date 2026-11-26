@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ask PMP</title><link rel="stylesheet" href="style.css"></head>
+<body><header><p><a href="./">PMP Prep</a></p><h1>Ask PMP</h1><p>Get project advice or practice a PMP decision with course evidence.</p></header>
+<main><section aria-labelledby="coach"><h2 id="coach">Coach</h2>
+<p id="coach-status" role="status">Checking sign-in…</p>
+<form id="coach-form" hidden>
+<label for="mode">Mode</label><select id="mode"><option value="project">Project Coach</option><option value="study">PMP Study Coach</option><option value="drill">Practice scenario</option></select>
+<label for="question">Question or practice topic</label>
+<textarea id="question" rows="5" maxlength="2200" required></textarea>
+<p>Use sanitized text. Your question and relevant course evidence are sent to the model provider. The public image uses original topic summaries, not raw transcripts. The app does not save conversations.</p>
+<button id="ask">Ask</button></form>
+<div id="coach-result" hidden><h3 id="result-heading" tabindex="-1">Response</h3><div id="answer"></div><ol id="sources"></ol></div>
+<form id="feedback-form" hidden><label for="attempt">Your answer and reasoning</label>
+<textarea id="attempt" rows="4" maxlength="1000" required></textarea><button id="grade">Get feedback</button></form>
+</section></main><script type="module" src="ask.mjs"></script></body></html>

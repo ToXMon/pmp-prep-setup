@@ -1,0 +1,30 @@
+version: "2.0"
+services:
+  coach:
+    image: docker.io/wijnaldum/ask-pmp@sha256:24286c46323fd8e4a6ca54199b344b6bdec319780bc7f25ebf186e92c07538e9
+    expose:
+      - port: 8080
+        as: 80
+        to:
+          - global: true
+profiles:
+  compute:
+    coach:
+      resources:
+        cpu:
+          units: 0.25
+        memory:
+          size: 256Mi
+        storage:
+          size: 512Mi
+  placement:
+    dcloud:
+      pricing:
+        coach:
+          denom: uact
+          amount: 2
+deployment:
+  coach:
+    dcloud:
+      profile: coach
+      count: 1
